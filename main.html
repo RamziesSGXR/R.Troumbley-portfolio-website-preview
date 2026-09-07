@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Robert Troumbley — Case File</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --wood-dark:#1c1310;
+    --wood-mid:#2f2118;
+    --wood-light:#4a3221;
+    --paper:#ece0bf;
+    --paper-light:#f6edd2;
+    --paper-shadow:#c9b98c;
+    --ink:#221c14;
+    --ink-faint:#5a4f3c;
+    --stamp-red:#7a1f1f;
+    --folder-tan:#c9a06a;
+    --folder-tan-dark:#a67c46;
+    --folder-shadow:#5e4326;
+    --brass:#a8823c;
+    --brass-light:#e0c07a;
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{
+    margin:0;
+    padding:0;
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse at 50% 15%, rgba(255,224,160,0.10), transparent 55%),
+      linear-gradient(var(--wood-dark), var(--wood-dark)),
+      repeating-linear-gradient(90deg, var(--wood-mid) 0px, var(--wood-light) 2px, var(--wood-mid) 60px);
+    font-family:'Courier Prime', monospace;
+    color:var(--ink);
+    overflow-x:hidden;
+  }
+
+  .grain{
+    position:fixed; inset:0; pointer-events:none; z-index:50; opacity:0.05; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .vignette{
+    position:fixed; inset:0; pointer-events:none; z-index:49;
+    box-shadow: inset 0 0 18vw 4vw rgba(0,0,0,0.75);
+  }
+
+  .desk{
+    position:relative;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:6vh 4vw;
+  }
+
+  /* ---------- desk props ---------- */
+  .prop{ position:absolute; opacity:0.85; filter:drop-shadow(0 6px 6px rgba(0,0,0,0.5)); }
+  .prop.paperclip{ top:6%; left:8%; width:60px; transform:rotate(-18deg); }
+  .prop.pen{ bottom:8%; right:9%; width:140px; transform:rotate(28deg); }
+  .prop.coffee{ bottom:12%; left:11%; width:90px; opacity:0.35; }
+  @media (max-width:720px){ .prop{ display:none; } }
+
+  /* ---------- closed folder ---------- */
+  .folder-closed{
+    position:relative;
+    width:min(78vw, 420px);
+    aspect-ratio: 4/3;
+    background:
+      linear-gradient(135deg, var(--folder-tan), var(--folder-tan-dark));
+    border-radius:4px 4px 10px 10px;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.6), inset 0 0 0 2px rgba(0,0,0,0.08);
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:8%;
+    transition: transform 0.6s cubic-bezier(.6,-0.2,.4,1.4), opacity 0.6s ease;
+    transform-origin: 50% 100%;
+    transform-style:preserve-3d;
+  }
+  .folder-closed::before{
+    content:"";
+    position:absolute; top:-14px; left:8%;
+    width:38%; height:22px;
+    background:var(--folder-tan);
+    border-radius:6px 6px 0 0;
+    box-shadow: inset 0 0 0 2px rgba(0,0,0,0.06);
+  }
+  .folder-closed.opening{
+    transform: rotateX(-125deg) translateY(-10px);
+    opacity:0;
+    pointer-events:none;
+  }
+  .stamp{
+    font-family:'Special Elite', monospace;
+    color:var(--stamp-red);
+    border:3px solid var(--stamp-red);
+    border-radius:6px;
+    padding:6px 14px;
+    transform:rotate(-8deg);
+    letter-spacing:2px;
+    font-size:clamp(14px,2.6vw,20px);
+    opacity:0.85;
+    margin-bottom:14px;
+    mix-blend-mode:multiply;
+  }
+  .folder-name{
+    font-family:'Special Elite', monospace;
+    font-size:clamp(20px,4vw,30px);
+    color:var(--ink);
+    margin:6px 0;
+  }
+  .folder-sub{
+    font-size:clamp(11px,2vw,13px);
+    color:var(--ink-faint);
+    letter-spacing:1px;
+  }
+  .tap-hint{
+    margin-top:18px;
+    font-size:12px;
+    color:var(--ink-faint);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse{ 0%,100%{opacity:0.5;} 50%{opacity:1;} }
+
+  /* ---------- case file (opened) ---------- */
+  .case-file{
+    width:min(94vw, 900px);
+    display:none;
+    flex-direction:column;
+    opacity:0;
+    transform:scale(0.94) translateY(10px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .case-file.visible{ display:flex; opacity:1; transform:scale(1) translateY(0); }
+
+  .tabs{
+    display:flex;
+    gap:6px;
+    padding-left:14px;
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  .tabs::-webkit-scrollbar{ display:none; }
+  .tab-btn{
+    font-family:'Special Elite', monospace;
+    font-size:clamp(11px,1.6vw,13px);
+    letter-spacing:1px;
+    background:var(--folder-tan);
+    color:var(--ink);
+    border:none;
+    border-radius:8px 8px 0 0;
+    padding:10px 16px 12px;
+    cursor:pointer;
+    white-space:nowrap;
+    box-shadow: 0 -2px 0 rgba(0,0,0,0.05) inset;
+    opacity:0.65;
+    transform:translateY(4px);
+    transition: transform 0.2s ease, opacity 0.2s ease, background 0.2s ease;
+  }
+  .tab-btn:hover{ opacity:0.85; }
+  .tab-btn.active{
+    background:var(--paper-light);
+    opacity:1;
+    transform:translateY(0);
+    box-shadow: 0 -6px 10px rgba(0,0,0,0.15);
+  }
+
+  .page-wrap{
+    background:var(--paper-light);
+    border-radius:2px 10px 10px 10px;
+    box-shadow: 0 24px 50px rgba(0,0,0,0.55);
+    min-height:60vh;
+    padding:clamp(20px,4vw,42px);
+    position:relative;
+    background-image:
+      repeating-linear-gradient(rgba(0,0,0,0.015) 0px, rgba(0,0,0,0.015) 1px, transparent 1px, transparent 26px);
+  }
+  .page-wrap::after{
+    content:"";
+    position:absolute; inset:0;
+    border-radius:2px 10px 10px 10px;
+    box-shadow: inset 0 0 40px rgba(120,90,40,0.08);
+    pointer-events:none;
+  }
+
+  .page{
+    animation: flipIn 0.4s ease;
+  }
+  @keyframes flipIn{
+    from{ opacity:0; transform: rotateY(8deg) translateX(10px); }
+    to{ opacity:1; transform: rotateY(0) translateX(0); }
+  }
+
+  h2.section-title{
+    font-family:'Special Elite', monospace;
+    font-size:clamp(20px,3.4vw,26px);
+    margin:0 0 4px;
+    color:var(--ink);
+  }
+  .section-rule{
+    border:none;
+    border-top:2px dashed var(--paper-shadow);
+    margin:10px 0 22px;
+  }
+
+  /* ---- FILE tab ---- */
+  .file-tab{ display:flex; gap:28px; flex-wrap:wrap; }
+  .photo-block{ position:relative; flex:0 0 auto; }
+  .photo{
+    width:150px; height:190px;
+    background:
+      repeating-linear-gradient(135deg, #1a1a1a, #1a1a1a 6px, #262626 6px, #262626 12px);
+    border:6px solid var(--paper);
+    box-shadow:0 6px 14px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,0,0,0.15);
+    display:flex; align-items:center; justify-content:center;
+    transform:rotate(-3deg);
+    position:relative;
+  }
+  .photo svg{ width:70%; opacity:0.8; }
+  .photo-caption{
+    position:absolute; bottom:6px; left:0; right:0; text-align:center;
+    font-family:'Special Elite',monospace; font-size:9px; color:#ddd; letter-spacing:1px;
+  }
+  .paperclip-svg{
+    position:absolute; top:-22px; left:-14px; width:52px; transform:rotate(-25deg);
+    filter:drop-shadow(2px 3px 2px rgba(0,0,0,0.4));
+  }
+  .bio-block{ flex:1 1 260px; min-width:240px; }
+  .subject-name{
+    font-family:'Special Elite', monospace;
+    font-size:clamp(22px,3.6vw,30px);
+    margin:0;
+  }
+  .subject-role{
+    color:var(--stamp-red);
+    font-weight:700;
+    margin:2px 0 12px;
+    font-size:14px;
+  }
+  #bioText{
+    line-height:1.75;
+    font-size:14.5px;
+    min-height:150px;
+  }
+  #bioText .cursor{
+    display:inline-block; width:8px; background:var(--ink); animation:blink 0.9s steps(1) infinite;
+  }
+  @keyframes blink{ 50%{ opacity:0; } }
+  .status-stamp{
+    display:inline-block;
+    margin-top:16px;
+    border:3px solid var(--stamp-red);
+    color:var(--stamp-red);
+    font-family:'Special Elite',monospace;
+    padding:6px 12px;
+    transform:rotate(-4deg);
+    border-radius:5px;
+    letter-spacing:1px;
+    font-size:12px;
+  }
+  .id-card{
+    margin-top:18px;
+    border:2px solid var(--ink-faint);
+    border-radius:6px;
+    padding:10px 14px;
+    font-size:12.5px;
+    display:grid;
+    grid-template-columns:auto 1fr;
+    gap:4px 10px;
+    max-width:340px;
+  }
+  .id-card b{ color:var(--ink-faint); font-weight:700; }
+
+  /* ---- dossier cards (work/education) ---- */
+  .dossier{
+    border:1px solid var(--paper-shadow);
+    border-left:5px solid var(--stamp-red);
+    background:rgba(255,255,255,0.35);
+    border-radius:2px 6px 6px 2px;
+    padding:16px 18px;
+    margin-bottom:18px;
+  }
+  .dossier-head{
+    display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:6px;
+    margin-bottom:8px;
+  }
+  .dossier-title{ font-family:'Special Elite',monospace; font-size:16px; }
+  .dossier-dates{ font-size:12px; color:var(--ink-faint); }
+  .dossier-grid{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:8px 20px;
+    font-size:13px;
+  }
+  .dossier-grid div b{
+    font-family:'Special Elite',monospace;
+    font-size:11px;
+    letter-spacing:1px;
+    color:var(--stamp-red);
+    display:block;
+    margin-bottom:2px;
+  }
+  .award-tag{
+    display:inline-block; margin-top:8px; font-size:11px; background:var(--brass-light);
+    border:1px solid var(--brass); padding:3px 8px; border-radius:10px; color:#5c4415;
+  }
+
+  /* ---- skills ---- */
+  .skill-cat{ margin-bottom:16px; }
+  .skill-cat-title{
+    font-family:'Special Elite',monospace; font-size:13px; color:var(--stamp-red);
+    letter-spacing:0.5px; margin-bottom:6px;
+  }
+  .chip-row{ display:flex; flex-wrap:wrap; gap:6px; }
+  .chip{
+    font-size:12px; background:var(--paper);
+    border:1px solid var(--paper-shadow); border-radius:3px;
+    padding:4px 9px;
+  }
+
+  /* ---- projects ---- */
+  .case-card{
+    border:1px dashed var(--ink-faint);
+    padding:14px 16px; margin-bottom:14px; border-radius:4px;
+    position:relative;
+  }
+  .case-card h4{ font-family:'Special Elite',monospace; margin:0 0 4px; font-size:15px; }
+  .case-card p{ margin:0 0 10px; font-size:13px; }
+  .open-case{
+    font-family:'Special Elite',monospace;
+    font-size:12px; color:var(--paper-light); background:var(--stamp-red);
+    border:none; padding:6px 12px; border-radius:3px; cursor:pointer; text-decoration:none; display:inline-block;
+  }
+
+  /* ---- contact ---- */
+  .contact-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; }
+  .contact-item{ font-size:14px; }
+  .contact-item b{ display:block; font-family:'Special Elite',monospace; font-size:11px; color:var(--stamp-red); margin-bottom:3px; letter-spacing:1px; }
+  .approved-stamp{
+    margin-top:24px;
+    display:inline-block;
+    border:4px double var(--stamp-red);
+    color:var(--stamp-red);
+    font-family:'Special Elite',monospace;
+    padding:10px 18px;
+    transform:rotate(-6deg);
+    border-radius:6px;
+    font-size:15px;
+    letter-spacing:1px;
+  }
+
+  footer.credit{
+    text-align:center; color:#8a7a5c; font-size:11px; margin-top:22px; letter-spacing:1px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="grain"></div>
+<div class="vignette"></div>
+
+<div class="desk">
+
+  <svg class="prop paperclip" viewBox="0 0 100 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M30 20 C30 8 45 5 55 12 C65 19 65 35 55 42 L35 100 C30 115 40 125 52 118 C60 113 62 105 58 96 L45 60" stroke="#8892a0" stroke-width="9" stroke-linecap="round"/>
+  </svg>
+  <svg class="prop pen" viewBox="0 0 200 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="10" width="150" height="10" rx="4" fill="#1a1a1a"/>
+    <polygon points="150,8 175,15 150,22" fill="#a8823c"/>
+    <rect x="0" y="10" width="30" height="10" rx="4" fill="#7a1f1f"/>
+  </svg>
+  <svg class="prop coffee" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" stroke="#3a2a17" stroke-width="4" fill="none"/></svg>
+
+  <!-- CLOSED FOLDER -->
+  <div class="folder-closed" id="folderClosed" role="button" tabindex="0" aria-label="Open case file">
+    <div class="stamp">CONFIDENTIAL</div>
+    <div class="folder-name">TROUMBLEY, R.</div>
+    <div class="folder-sub">CASE FILE No. 1984-A · SAN ANTONIO, TX</div>
+    <div class="tap-hint">— TAP TO OPEN FILE —</div>
+  </div>
+
+  <!-- OPENED CASE FILE -->
+  <div class="case-file" id="caseFile">
+    <div class="tabs" id="tabs">
+      <button class="tab-btn active" data-tab="file">FILE</button>
+      <button class="tab-btn" data-tab="work">WORK HISTORY</button>
+      <button class="tab-btn" data-tab="education">EDUCATION</button>
+      <button class="tab-btn" data-tab="skills">SKILLS</button>
+      <button class="tab-btn" data-tab="projects">PROJECTS</button>
+      <button class="tab-btn" data-tab="contact">CONTACT</button>
+    </div>
+    <div class="page-wrap">
+      <div class="page" id="page"></div>
+    </div>
+    <footer class="credit">FILE MAINTAINED BY SUBJECT · DO NOT DUPLICATE WITHOUT INTEREST</footer>
+  </div>
+
+</div>
+
+<script>
+/* ---------------- audio: synthesized typewriter sounds ---------------- */
+let actx;
+function getCtx(){
+  if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+  return actx;
+}
+function noiseBurst(duration, freq, q, gainVal){
+  const ctx = getCtx();
+  const size = Math.floor(ctx.sampleRate * duration);
+  const buffer = ctx.createBuffer(1, size, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<size;i++){
+    data[i] = (Math.random()*2-1) * Math.pow(1 - i/size, 2);
+  }
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  const filt = ctx.createBiquadFilter();
+  filt.type = 'bandpass';
+  filt.frequency.value = freq;
+  filt.Q.value = q;
+  const gain = ctx.createGain();
+  gain.gain.value = gainVal;
+  src.connect(filt).connect(gain).connect(ctx.destination);
+  src.start();
+}
+function clack(){ noiseBurst(0.035, 2200 + Math.random()*400, 2.5, 0.28); }
+function thunk(){
+  noiseBurst(0.18, 180, 1.2, 0.5);
+  setTimeout(()=>noiseBurst(0.08, 3000, 1.5, 0.15), 40);
+}
+function ding(){ noiseBurst(0.05, 3600, 4, 0.18); }
+
+/* ---------------- open folder ---------------- */
+const folderClosed = document.getElementById('folderClosed');
+const caseFile = document.getElementById('caseFile');
+
+function openFolder(){
+  thunk();
+  folderClosed.classList.add('opening');
+  setTimeout(()=>{
+    folderClosed.style.display = 'none';
+    caseFile.style.display = 'flex';
+    requestAnimationFrame(()=> caseFile.classList.add('visible'));
+    renderTab('file');
+  }, 550);
+}
+folderClosed.addEventListener('click', openFolder);
+folderClosed.addEventListener('keydown', e=>{ if(e.key==='Enter' || e.key===' ') openFolder(); });
+
+/* ---------------- tabs ---------------- */
+const tabs = document.getElementById('tabs');
+const page = document.getElementById('page');
+
+tabs.addEventListener('click', e=>{
+  const btn = e.target.closest('.tab-btn');
+  if(!btn) return;
+  clack();
+  [...tabs.children].forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTab(btn.dataset.tab);
+});
+
+/* ---------------- content data ---------------- */
+const jobs = [
+  {
+    title:"Non-Commissioned Officer",
+    org:"Texas Veteran Security Services",
+    dates:"Present",
+    where:"San Antonio, TX",
+    who:"Security officer safeguarding site access and grounds.",
+    what:"Inspects vehicles, bags and belongings; monitors surveillance and alarm systems; logs incidents.",
+    why:"To keep people and property safe and maintain order on site.",
+    how:"Active patrols, prompt response to alerts, and coordination with law enforcement on investigations."
+  },
+  {
+    title:"Freelance Analyst",
+    org:"Self-employed",
+    dates:"Apr 2020 – Present",
+    where:"Washington State (remote)",
+    who:"Independent digital marketing analyst and strategist.",
+    what:"Runs SEO/SEM/paid-media campaigns, manages full content lifecycle, and audits site performance.",
+    why:"To grow client visibility, engagement, and conversion across channels.",
+    how:"Google/Meta/TikTok Ads, analytics-driven A/B testing, technical SEO fixes, close collaboration with designers and developers."
+  },
+  {
+    title:"Food Service Worker",
+    org:"Costco Wholesale",
+    dates:"Nov 2023 – Apr 2025",
+    where:"Tukwila, WA",
+    who:"Food court team member.",
+    what:"Served customers, ran closing and pre-prep duties, trained new hires.",
+    why:"To keep the food court running safely and efficiently while completing his degree.",
+    how:"Balanced coursework with shifts, verified tasks against protocol, mentored incoming staff."
+  },
+  {
+    title:"Sales Support Administrator",
+    org:"Real Carriage Door Co Inc",
+    dates:"May 2021 – Apr 2022",
+    where:"Gig Harbor, WA",
+    who:"Sales support administrator.",
+    what:"Drafted proposals, contracts, and onboarding docs; tracked pipeline; prepared SOWs and compliance records.",
+    why:"To keep the sales pipeline moving and the team organized.",
+    how:"Salesforce, HubSpot and Zoho CRM; commission reporting; scheduling and customer follow-up."
+  },
+  {
+    title:"Installs Sales Coordinator",
+    org:"Lowe's Companies, Inc.",
+    dates:"Dec 2019 – Apr 2021",
+    where:"Tacoma, WA",
+    who:"Installation sales coordinator.",
+    what:"Coordinated install projects end-to-end and served as liaison between installers, vendors and customers.",
+    why:"To deliver installs on time, to spec, and within SLA and safety standards.",
+    how:"Salesforce/SAP/Oracle reporting, Lean/Six Sigma and OSHA practices, escalation resolution."
+  },
+  {
+    title:"Project Coordinator",
+    org:"Great Floors",
+    dates:"Jul 2019 – Dec 2019",
+    where:"Tacoma, WA",
+    who:"Project coordinator, commissioned sales.",
+    what:"Managed flooring project sales and install coordination for residential and commercial clients.",
+    why:"To grow flooring sales and build repeat and referral business.",
+    how:"Salesforce/HubSpot/Oracle pipeline tracking, consultative upselling, scheduling and QA checks."
+  },
+  {
+    title:"Sales Specialist",
+    org:"The Home Depot",
+    dates:"Jan 2013 – Jul 2019",
+    where:"Seattle, WA",
+    who:"Sales specialist, electrical / décor / flooring / building materials.",
+    what:"Guided customers through measurement, quoting, special orders and project planning.",
+    why:"To help customers plan and finish their projects while hitting sales and service goals.",
+    how:"Forklift-certified operations, OSHA and loss-prevention compliance, cashier training support.",
+    award:"Platinum Homer Award — Mar 2018, for 12+ actions above and beyond company values."
+  }
+];
+
+const education = [
+  {
+    title:"Information Systems & Cybersecurity",
+    org:"Olympic College",
+    dates:"2022 – Present (paused, resuming in TX)",
+    where:"Remote / Texas transfer in progress",
+    detail:"Associate of Science, Information Systems &amp; Cybersecurity — 3.8 GPA."
+  },
+  {
+    title:"High School Diploma",
+    org:"Joel E. Ferris High School",
+    dates:"Sep 2008 – Mar 2012",
+    where:"Spokane, WA",
+    detail:""
+  },
+  {
+    title:"Cybersecurity Essentials",
+    org:"Cisco Networking Academy",
+    dates:"Jan 2023 – Present",
+    where:"Certification",
+    detail:"Cybersecurity literacy, data defense, network protection, security response, data breach analysis."
+  },
+  {
+    title:"Texas Private Security Level II",
+    org:"State of Texas",
+    dates:"Jun 2025 – Jun 2027",
+    where:"License",
+    detail:"Non-commissioned license covering Texas security law, use of force, and unarmed guard duties."
+  }
+];
+
+const skillGroups = [
+  {cat:"XR & Emerging Tech", items:["Unity","Unreal Engine","OpenXR","VR/AR Prototyping","OAuth 2.0","Digital Twins"]},
+  {cat:"Cybersecurity & Network Defense", items:["Zero-Trust Architecture","Nmap","Wireshark","Nessus","Burp Suite","Splunk","Elastic SIEM","Firewall Config (Cisco ASA, Juniper SRX)"]},
+  {cat:"Programming & Scripting", items:["Python","SQL","HTML/CSS","Bash","PowerShell","Git"]},
+  {cat:"Marketing & Growth", items:["SEO","SEM","Google Ads","Meta Ads","TikTok Ads","A/B Testing","CRO","Analytics"]},
+  {cat:"CRM & ERP", items:["Salesforce","HubSpot","Zoho","Oracle","SAP"]},
+  {cat:"Data & Analytics", items:["Data Modeling","Predictive Analytics","Dashboards","Excel (Advanced)"]},
+  {cat:"Leadership", items:["Team Leadership","Mentorship","Conflict Resolution","Training & Development"]},
+  {cat:"Creative Tools", items:["Photoshop","Illustrator","Premiere Pro","Figma","Canva"]}
+];
+
+const projects = [
+  {name:"troumbley.com", desc:"Personal portfolio site — the previous home base, now upgraded to this case file.", url:"https://www.troumbley.com/"},
+  {name:"SGXR.dev", desc:"Operator and main contributor — exploring XR technology through articles, videos and projects.", url:"https://www.sgxr.dev/"},
+  {name:"GitHub — RamziesSGXR", desc:"Code repositories and project experiments.", url:"https://github.com/RamziesSGXR"},
+  {name:"scratchedgls.com", desc:"Additional venture on file — see link for details.", url:"https://scratchedgls.com/"}
+];
+
+/* ---------------- typewriter reveal ---------------- */
+function typeInto(el, text, speed=22){
+  el.innerHTML = '';
+  let i = 0;
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor';
+  cursor.textContent = '\u00A0';
+  el.appendChild(cursor);
+  const interval = setInterval(()=>{
+    if(i < text.length){
+      cursor.insertAdjacentText('beforebegin', text[i]);
+      if(text[i] !== ' ' && i % 3 === 0) clack();
+      i++;
+    } else {
+      clearInterval(interval);
+      cursor.remove();
+    }
+  }, speed);
+}
+
+/* ---------------- render tabs ---------------- */
+function renderTab(name){
+  if(name === 'file') return renderFile();
+  if(name === 'work') return renderWork();
+  if(name === 'education') return renderEducation();
+  if(name === 'skills') return renderSkills();
+  if(name === 'projects') return renderProjects();
+  if(name === 'contact') return renderContact();
+}
+
+function remount(html){
+  page.style.animation = 'none';
+  void page.offsetWidth;
+  page.innerHTML = html;
+  page.style.animation = 'flipIn 0.4s ease';
+}
+
+let bioTyped = false;
+function renderFile(){
+  remount(`
+    <div class="file-tab">
+      <div class="photo-block">
+        <svg class="paperclip-svg" viewBox="0 0 100 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M30 20 C30 8 45 5 55 12 C65 19 65 35 55 42 L35 100 C30 115 40 125 52 118 C60 113 62 105 58 96 L45 60" stroke="#8892a0" stroke-width="9" stroke-linecap="round"/>
+        </svg>
+        <div class="photo">
+          <svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="38" r="20" fill="#555"/><path d="M15 95 C15 65 85 65 85 95 Z" fill="#555"/></svg>
+          <div class="photo-caption">SUBJECT — ON FILE</div>
+        </div>
+      </div>
+      <div class="bio-block">
+        <h3 class="subject-name">Robert Troumbley</h3>
+        <div class="subject-role">Sales · Marketing · Security · XR</div>
+        <div id="bioText"></div>
+        <div class="status-stamp">OPEN TO OPPORTUNITIES</div>
+        <div class="id-card">
+          <b>Base</b><span>San Antonio, TX</span>
+          <b>Status</b><span>Authorized to work in the US for any employer</span>
+          <b>Studying</b><span>Information Systems &amp; Cybersecurity, XR focus</span>
+        </div>
+      </div>
+    </div>
+  `);
+  const bioEl = document.getElementById('bioText');
+  const bio = "Versatile professional with extensive experience in sales, project coordination, digital marketing, and security. Proven ability to manage complex projects and teams while maintaining strong customer and client relationships \u2014 across billion-dollar enterprises, mid-sized companies, and small family-owned businesses. Inquisitive, proactive, and adaptable, with a track record of driving revenue and fostering team growth. Currently pursuing advanced studies in Information Systems Cybersecurity with a focus on XR (VR/AR) technologies.";
+  if(!bioTyped){
+    typeInto(bioEl, bio, 14);
+    bioTyped = true;
+  } else {
+    bioEl.textContent = bio;
+  }
+}
+
+function renderWork(){
+  const html = `
+    <h2 class="section-title">Work History</h2>
+    <hr class="section-rule">
+    ${jobs.map(j => `
+      <div class="dossier">
+        <div class="dossier-head">
+          <div class="dossier-title">${j.title} — ${j.org}</div>
+          <div class="dossier-dates">${j.dates}</div>
+        </div>
+        <div class="dossier-grid">
+          <div><b>WHO</b>${j.who}</div>
+          <div><b>WHAT</b>${j.what}</div>
+          <div><b>WHEN</b>${j.dates}</div>
+          <div><b>WHERE</b>${j.where}</div>
+          <div><b>WHY</b>${j.why}</div>
+          <div><b>HOW</b>${j.how}</div>
+        </div>
+        ${j.award ? `<div class="award-tag">🏅 ${j.award}</div>` : ''}
+      </div>
+    `).join('')}
+  `;
+  remount(html);
+}
+
+function renderEducation(){
+  const html = `
+    <h2 class="section-title">Education &amp; Certifications</h2>
+    <hr class="section-rule">
+    ${education.map(e => `
+      <div class="dossier">
+        <div class="dossier-head">
+          <div class="dossier-title">${e.title}</div>
+          <div class="dossier-dates">${e.dates}</div>
+        </div>
+        <div class="dossier-grid">
+          <div><b>INSTITUTION</b>${e.org}</div>
+          <div><b>LOCATION</b>${e.where}</div>
+        </div>
+        ${e.detail ? `<p style="margin-top:8px;font-size:13px;">${e.detail}</p>` : ''}
+      </div>
+    `).join('')}
+  `;
+  remount(html);
+}
+
+function renderSkills(){
+  const html = `
+    <h2 class="section-title">Skills Index</h2>
+    <hr class="section-rule">
+    ${skillGroups.map(g => `
+      <div class="skill-cat">
+        <div class="skill-cat-title">${g.cat}</div>
+        <div class="chip-row">${g.items.map(i=>`<span class="chip">${i}</span>`).join('')}</div>
+      </div>
+    `).join('')}
+  `;
+  remount(html);
+}
+
+function renderProjects(){
+  const html = `
+    <h2 class="section-title">Prominent Projects</h2>
+    <hr class="section-rule">
+    ${projects.map(p => `
+      <div class="case-card">
+        <h4>${p.name}</h4>
+        <p>${p.desc}</p>
+        <a class="open-case" href="${p.url}" target="_blank" rel="noopener">OPEN CASE →</a>
+      </div>
+    `).join('')}
+  `;
+  remount(html);
+}
+
+function renderContact(){
+  const html = `
+    <h2 class="section-title">Contact</h2>
+    <hr class="section-rule">
+    <div class="contact-grid">
+      <div class="contact-item"><b>EMAIL</b>robertallentroumbley@gmail.com</div>
+      <div class="contact-item"><b>PHONE</b>+1 509 769 8551</div>
+      <div class="contact-item"><b>LOCATION</b>San Antonio, TX 78253</div>
+      <div class="contact-item"><b>PORTFOLIO</b><a href="https://www.troumbley.com/" target="_blank" rel="noopener">troumbley.com</a></div>
+      <div class="contact-item"><b>GITHUB</b><a href="https://github.com/RamziesSGXR" target="_blank" rel="noopener">github.com/RamziesSGXR</a></div>
+      <div class="contact-item"><b>XR PROJECT</b><a href="https://www.sgxr.dev/" target="_blank" rel="noopener">sgxr.dev</a></div>
+    </div>
+    <div class="approved-stamp">APPROVED FOR HIRE</div>
+  `;
+  remount(html);
+}
+</script>
+</body>
+</html>
