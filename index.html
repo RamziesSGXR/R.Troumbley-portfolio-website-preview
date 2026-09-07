@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Robert Troumbley — Case File</title>
+<title>Robert Troumbley: Case File</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -540,7 +540,7 @@ const jobs = [
     what:"Guided customers through measurement, quoting, special orders and project planning.",
     why:"To help customers plan and finish their projects while hitting sales and service goals.",
     how:"Forklift-certified operations, OSHA and loss-prevention compliance, cashier training support.",
-    award:"Platinum Homer Award — Mar 2018, for 12+ actions above and beyond company values."
+    award:"Platinum Homer Award: Mar 2018, for 12+ actions above and beyond company values."
   }
 ];
 
@@ -550,7 +550,7 @@ const education = [
     org:"Olympic College",
     dates:"2022 – Present (paused, resuming in TX)",
     where:"Remote / Texas transfer in progress",
-    detail:"Associate of Science, Information Systems &amp; Cybersecurity — 3.8 GPA."
+    detail:"Associate of Science, Information Systems &amp; Cybersecurity: 3.8 GPA."
   },
   {
     title:"High School Diploma",
@@ -587,10 +587,9 @@ const skillGroups = [
 ];
 
 const projects = [
-  {name:"troumbley.com", desc:"Personal portfolio site — the previous home base, now upgraded to this case file.", url:"https://www.troumbley.com/"},
-  {name:"SGXR.dev", desc:"Operator and main contributor — exploring XR technology through articles, videos and projects.", url:"https://www.sgxr.dev/"},
+  {name:"SGXR.dev", desc:"Operator and main contributor: exploring XR technology through articles, videos and projects.", url:"https://www.sgxr.dev/"},
   {name:"GitHub — RamziesSGXR", desc:"Code repositories and project experiments.", url:"https://github.com/RamziesSGXR"},
-  {name:"scratchedgls.com", desc:"Additional venture on file — see link for details.", url:"https://scratchedgls.com/"}
+  {name:"scratchedgls.com", desc:"Additional venture on file: see link for details.", url:"https://scratchedgls.com/"}
 ];
 
 /* ---------------- typewriter reveal ---------------- */
@@ -639,8 +638,8 @@ function renderFile(){
           <path d="M30 20 C30 8 45 5 55 12 C65 19 65 35 55 42 L35 100 C30 115 40 125 52 118 C60 113 62 105 58 96 L45 60" stroke="#8892a0" stroke-width="9" stroke-linecap="round"/>
         </svg>
         <div class="photo">
-          <svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="38" r="20" fill="#555"/><path d="M15 95 C15 65 85 65 85 95 Z" fill="#555"/></svg>
-          <div class="photo-caption">SUBJECT — ON FILE</div>
+          <img src="https://raw.githubusercontent.com/RamziesSGXR/R.Troumbley-portfolio-website-preview/main/mugshot.png" style="width:100%;height:100%;object-fit:cover;">
+          <div class="photo-caption">SUBJECT: ON FILE</div>
         </div>
       </div>
       <div class="bio-block">
@@ -657,7 +656,7 @@ function renderFile(){
     </div>
   `);
   const bioEl = document.getElementById('bioText');
-  const bio = "Versatile professional with extensive experience in sales, project coordination, digital marketing, and security. Proven ability to manage complex projects and teams while maintaining strong customer and client relationships \u2014 across billion-dollar enterprises, mid-sized companies, and small family-owned businesses. Inquisitive, proactive, and adaptable, with a track record of driving revenue and fostering team growth. Currently pursuing advanced studies in Information Systems Cybersecurity with a focus on XR (VR/AR) technologies.";
+  const bio = "Career sales and project coordinator, worked mainly at Home Depot, Lowe's, and Real Carriage Door, relocated across states (Has lived and worked in multiple states at various times: Utah, Washington, Hawaii, Idaho, Oregon, Texas) after a layoff from Real Carriage Door and a rough personal stretch, he took a steadying job at Costco leading the food department while he found his footing, and continues his education, mainly around emerging visual technologies (VR/AR). A move to Texas to be closer to family brought a shift into overnight security work, and he's been building his own projects on the side ever since, while looking for the role that actually fits: sales, coordination, and marketing experience, put to full use.";
   if(!bioTyped){
     typeInto(bioEl, bio, 14);
     bioTyped = true;
